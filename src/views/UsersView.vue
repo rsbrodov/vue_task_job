@@ -47,17 +47,17 @@
 
     <table class="table table-bordered table-hover mt-4">
       <tr>
-        <th>ID</th>
-        <th>ФИО</th>
-        <th>Email</th>
-        <th>Avatar</th>
+        <th class="hover" @click="sort('id')">{{ sortBy === "id" ? "*" : "" }}ID</th>
+        <th class="hover" @click="sort('first_name')">{{ sortBy === "first_name" ? "*" : "" }}ФИО</th>
+        <th class="hover" @click="sort('email')">{{ sortBy === "email" ? "*" : "" }}Email</th>
+        <th>Аватар</th>
       </tr>
       <tr v-if="data.data.length === 0">
         <td class="text-center text-danger" colspan="7">
           <b>Данные не найдены!</b>
         </td>
       </tr>
-      <tr v-else v-for="(element, index) in data.data.data" :key="index">
+      <tr v-else v-for="(element, index) in filteredUsers" :key="index">
         <td>{{ element.id }}</td>
         <td>{{ element.first_name + " " + element.last_name }}</td>
         <td>{{ element.email }}</td>
@@ -68,23 +68,44 @@
 </template>
 
 
-
+<style scoped>
+.hover:hover{
+  cursor: pointer;
+}
+</style>
 <script>
-import $ from 'jquery'
+//import $ from "jquery";
 export default {
   data: function () {
     return {
+      sortBy: "id",
+      sortOrder: 1,
       data: null,
       filter_form: {
-        status: "",
         name: "",
-        active_from: "",
-        active_after: "",
+        email: "",
       },
       //https://lobster.tools/api/v1/categories
     };
   },
-  computed: {},
+  computed: {
+    filteredUsers: function () {
+      return this.data.data.data
+        .filter(
+          (user) =>
+            (user.first_name.toLowerCase().match(this.filter_form.name) ||
+              user.last_name.toLowerCase().match(this.filter_form.name)) &&
+            user.email.toLowerCase().match(this.filter_form.email)
+        )
+        .map((i) => ({ ...i, id: parseFloat(i.id) })) //начало сортировки по возрастанию или убыванию sortBy - это по какому полю назначение поля в функции сорт
+        .sort((a, b) => {
+          if (a[this.sortBy] >= b[this.sortBy]) {
+            return this.sortOrder;
+          }
+          return -this.sortOrder;
+        });
+    },
+  },
   methods: {
     async getCategories() {
       this.data = await this.axios.get("https://reqres.in/api/users", {
@@ -94,10 +115,16 @@ export default {
         },
       });
     },
+    sort: function (sortBy) {
+      if (this.sortBy === sortBy) {
+        this.sortOrder = -this.sortOrder;
+      } else {
+        this.sortBy = sortBy;
+      }
+    },
     cleanSearch() {
-      $("form").each(function () {
-        this.reset();
-      });
+      this.filter_form.name = "";
+      this.filter_form.email = "";
     },
   },
   filters: {

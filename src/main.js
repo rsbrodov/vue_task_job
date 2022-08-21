@@ -5,6 +5,7 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 import 'bootstrap/dist/css/bootstrap.css'
 
+
 window.$ = require('jquery')
 window.JQuery = require('jquery')
 const app = createApp(App).use(router)
